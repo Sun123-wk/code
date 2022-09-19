@@ -1,8 +1,11 @@
 #pragma once
 #include <string>
+#include <stdio.h>  
+#include <math.h> 
 #include "iostream"
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include<opencv2/opencv.hpp>
 #include <vector>
 
 using json = nlohmann::json;

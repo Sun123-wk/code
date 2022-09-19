@@ -9,6 +9,9 @@
         "string_view": "cpp",
         "ranges": "cpp",
         "valarray": "cpp",
-        "iostream": "cpp"
-    }
+        "iostream": "cpp",
+        "cmath": "cpp",
+        "complex": "cpp"
+    },
+    "cmake.configureOnOpen": false
 }
