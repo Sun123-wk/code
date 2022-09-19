@@ -15,7 +15,7 @@ void imSynthesis::integrate()
     double quadrilateralA, quadrilateralB;
     bool identified;
 
-	ifstream jfile("../result_2.json");
+	ifstream jfile("../example/result_2.json");
 	json data = json::parse(jfile);
     jfile.close();
 
