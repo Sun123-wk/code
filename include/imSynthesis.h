@@ -7,6 +7,8 @@
 #include <nlohmann/json.hpp>
 #include<opencv2/opencv.hpp>
 #include <vector>
+#include <iostream>
+#include <thread>
 
 using json = nlohmann::json;
 using namespace std;

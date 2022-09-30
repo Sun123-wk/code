@@ -13,6 +13,7 @@ typedef struct{
     int label;
 }detection;
 
+void compute(json data, string mode, double _IoUThreshold);
 
 double IOU(vector<double> x_A, vector<double> y_A, vector<double> x_B, vector<double> y_B);
 
@@ -21,6 +22,10 @@ int find_leftmost_point(vector<cv::Point2f> intersectingRegion);
 vector<cv::Point2f> sort_points(vector<cv::Point2f> intersectingRegion);
 
 float rbox_iou(detection d1, detection d2);
+
+json data;
+
+mutex mtx;
 
 void imSynthesis::integrate()
 {	
@@ -32,46 +37,21 @@ void imSynthesis::integrate()
     bool duplicate;
     double iou;
 
+    thread th[100];
+
 	ifstream jfile("../json_example/result_2.json");
-	json data = json::parse(jfile);
+	data = json::parse(jfile);
     jfile.close();
 
     string modelist[2] = {"row", "column"};
 
     for(int l=0; l<2; ++l){
         string mode = modelist[l];
+        th[l] = thread(compute, data, mode, _IoUThreshold);
+    }
 
-        for(i=0; i<data[mode].size(); ++i){
-            for(k=0;k<4;k++){
-                x_A.push_back(data[mode][i]["location"]["points"][k]["x"]);
-                y_A.push_back(data[mode][i]["location"]["points"][k]["y"]);
-            }
-            identified  = false;
-            for(j=min(0, i-5); j<min(int(data["normal"].size()), i+5); ++j){
-                for(k=0;k<4;k++){
-                    x_B.push_back(data["normal"][i]["location"]["points"][k]["x"]);
-                    y_B.push_back(data["normal"][i]["location"]["points"][k]["y"]);
-                }
-                iou = IOU(x_A, x_B, y_A, y_B);
-
-                x_B.clear();
-                y_B.clear();
-
-                if(iou > _IoUThreshold){
-                    identified = true;
-                    break;
-                }
-            }
-            if(identified == false){
-                data["normal"].push_back(data[mode][i]);
-            }
-
-            x_A.clear();
-            y_A.clear();
-
-            printf("\r%s", mode.c_str());
-            printf("处理中[%.2lf%%]", i*100.0 / (data[mode].size() - 1));            
-        }
+    for(int l=0; l<2; ++l){
+        th[l].join();
     }
 
     for(i=0; i<data["normal"].size(); ++i){
@@ -107,6 +87,51 @@ void imSynthesis::integrate()
     }
 
     cout << "\n" << data["normal"].size() << endl;
+}
+
+void compute(json data, string mode, double _IoUThreshold){
+    int i, j, k;
+    vector<double> x_A, y_A;
+    vector<double> x_B, y_B;
+    double quadrilateralA, quadrilateralB;
+    bool identified;
+    bool duplicate;
+    double iou;
+
+    for(i=0; i<data[mode].size(); ++i){
+            for(k=0;k<4;k++){
+                x_A.push_back(data[mode][i]["location"]["points"][k]["x"]);
+                y_A.push_back(data[mode][i]["location"]["points"][k]["y"]);
+            }
+            identified  = false;
+            for(j=min(0, i-5); j<min(int(data["normal"].size()), i+5); ++j){
+                for(k=0;k<4;k++){
+                    x_B.push_back(data["normal"][i]["location"]["points"][k]["x"]);
+                    y_B.push_back(data["normal"][i]["location"]["points"][k]["y"]);
+                }
+                iou = IOU(x_A, x_B, y_A, y_B);
+
+                x_B.clear();
+                y_B.clear();
+
+                if(iou > _IoUThreshold){
+                    identified = true;
+                    break;
+                }
+            }
+
+            mtx.lock();
+            if(identified == false){
+                data["normal"].push_back(data[mode][i]);
+            }
+            mtx.unlock();
+
+            x_A.clear();
+            y_A.clear();
+
+            printf("\r%s", mode.c_str());
+            printf("处理中[%.2lf%%]", i*100.0 / (data[mode].size() - 1));            
+        }
 }
 
 double ComputePolygonArea(vector<double> x, vector<double> y)

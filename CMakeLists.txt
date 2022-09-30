@@ -9,6 +9,8 @@ FetchContent_MakeAvailable(json)
 
 find_package(OpenCV REQUIRED)
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
 include_directories( ${OpenCV_INCLUDE_DIRS} include)
 
 add_executable(integrate_cmake_exe main.cpp src/imSynthesis.cpp)
